@@ -1,0 +1,29 @@
+receivers:
+  filelog:
+    include: [ /var/lib/docker/containers/*/*.log ]
+    start_at: beginning
+    include_file_path: true
+    operators:
+      - type: json_parser
+      - type: timestamp
+        parse_from: attributes.time
+        layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+
+exporters:
+  otlp:
+    endpoint: "clickhouse:4317"
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    logs:
+      receivers: [filelog]
+      processors: [batch]
+      exporters: [otlp]
+
