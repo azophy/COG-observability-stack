@@ -9,10 +9,43 @@ receivers:
         parse_from: attributes.time
         layout: '%Y-%m-%dT%H:%M:%S.%LZ'
 
+  docker_stats:
+    endpoint: "unix:///var/run/docker.sock"
+    collection_interval: 10s
+    timeout: 20s
+    api_version: 1.24
+    containers_scope:
+      include:
+        - .*
+    metrics:
+      container.cpu.usage:
+        enabled: true
+      container.memory.usage:
+        enabled: true
+      container.memory.working_set:
+        enabled: true
+      container.network.io.usage:
+        enabled: true
+      container.blockio.io.usage:
+        enabled: true
+
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
 processors:
   batch:
     timeout: 1s
     send_batch_size: 1024
+
+  resource:
+    attributes:
+      - key: service.name
+        action: insert
+        value: docker-metrics
 
 exporters:
   otlp:
@@ -26,4 +59,11 @@ service:
       receivers: [filelog]
       processors: [batch]
       exporters: [otlp]
-
+    metrics:
+      receivers: [docker_stats]
+      processors: [batch, resource]
+      exporters: [otlp]
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp]

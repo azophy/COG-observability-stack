@@ -5,7 +5,7 @@
         <console>true</console>
     </logger>
 
-    <!-- Create the logs table -->
+    <!-- Table for logs -->
     <query>CREATE TABLE IF NOT EXISTS docker_logs (
         timestamp DateTime64(9),
         container_id String,
@@ -15,6 +15,32 @@
         attrs Map(String, String)
     ) ENGINE = MergeTree()
     ORDER BY (timestamp, container_id);</query>
+
+    <!-- Table for metrics -->
+    <query>CREATE TABLE IF NOT EXISTS docker_metrics (
+        timestamp DateTime64(9),
+        container_id String,
+        container_name String,
+        metric_name String,
+        metric_value Float64,
+        metric_type String
+    ) ENGINE = MergeTree()
+    ORDER BY (timestamp, container_id, metric_name);</query>
+
+    <!-- Table for traces -->
+    <query>CREATE TABLE IF NOT EXISTS traces (
+        timestamp DateTime64(9),
+        trace_id String,
+        span_id String,
+        parent_span_id String,
+        service_name String,
+        operation_name String,
+        duration_ms Float64,
+        status_code String,
+        status_message String,
+        attributes Map(String, String)
+    ) ENGINE = MergeTree()
+    ORDER BY (timestamp, trace_id, span_id);</query>
 
   <!-- otel collector config -->
   <opentelemetry>

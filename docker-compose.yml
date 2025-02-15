@@ -1,14 +1,12 @@
-version: '3.8'
-
 services:
-  # OpenTelemetry Collector with custom build
   otel-collector:
     image: otel/opentelemetry-collector-contrib-dev:latest
     container_name: otel-collector
     command: ["--config=/etc/otel-collector-config.yml"]
     volumes:
       - ./otel-collector-config.yml:/etc/otel-collector-config.yml
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro # Added volume mount for Docker logs
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
       - "8888:8888"   # Prometheus metrics exposed by the collector
       - "8889:8889"   # Prometheus exporter metrics
@@ -17,7 +15,6 @@ services:
     depends_on:
       - clickhouse
 
-  # ClickHouse database
   clickhouse:
     image: clickhouse/clickhouse-server:latest
     container_name: clickhouse
@@ -33,15 +30,20 @@ services:
       - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
       - CLICKHOUSE_PASSWORD=clickhouse123
 
-  # Example application generating logs
+  # Example traced application
   example-app:
-    image: nginx:latest
-    container_name: example-app
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    build:
+      context: ./example-app
+      dockerfile: Dockerfile
+    container_name: example-traced-app
+    ports:
+      - "8000:8000"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=example-service
+      - OTEL_TRACES_SAMPLER=parentbased_always_on
+    depends_on:
+      - otel-collector
 
 volumes:
   clickhouse_data:
