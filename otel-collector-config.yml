@@ -1,3 +1,4 @@
+# otel-collector-config.yml
 receivers:
   filelog:
     include: [ /var/lib/docker/containers/*/*.log ]
@@ -5,28 +6,25 @@ receivers:
     include_file_path: true
     operators:
       - type: json_parser
-      - type: timestamp
-        parse_from: attributes.time
-        layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+      #- type: timestamp
+      #  parse_from: attributes.time
+      #  layout: '%Y-%m-%dT%H:%M:%S.%LZ'
 
   docker_stats:
     endpoint: "unix:///var/run/docker.sock"
     collection_interval: 10s
     timeout: 20s
-    api_version: "1.24"
-    containers_scope:
-      include:
-        - .*
+    api_version: "1.47"
     metrics:
-      container.cpu.usage:
+      container.cpu.usage.total:
         enabled: true
-      container.memory.usage:
+      container.memory.usage.total:
         enabled: true
-      container.memory.working_set:
+        #container.memory.working_set:
+        #  enabled: true
+      container.network.io.usage.rx_bytes:
         enabled: true
-      container.network.io.usage:
-        enabled: true
-      container.blockio.io.usage:
+      container.network.io.usage.tx_bytes:
         enabled: true
 
   otlp:
