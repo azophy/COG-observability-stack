@@ -1,0 +1,16 @@
+# grafana/provisioning/datasources/clickhouse.yml
+apiVersion: 1
+
+datasources:
+  - name: ClickHouse
+    type: grafana-clickhouse-datasource
+    jsonData:
+      defaultDatabase: logs
+      port: 9000
+      server: clickhouse
+      username: default
+      tlsSkipVerify: true
+    secureJsonData:
+      password: clickhouse123
+    editable: true
+
